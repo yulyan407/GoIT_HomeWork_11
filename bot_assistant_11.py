@@ -74,7 +74,7 @@ class Phone(Field):
         10, 12):
             self._value = value
         else:
-            raise ValueError('Invalid phone format')
+            raise PhoneInvalidFormatError('Invalid phone format')
 
 
 class Birthday(Field):
@@ -89,7 +89,13 @@ class Birthday(Field):
         if birthday is not None and birthday < today:
             self._value = value
         else:
-            raise ValueError('Invalid birthday format')
+            raise BirthdayInvalidFormatError('Invalid birthday format')
+
+class PhoneInvalidFormatError(Exception):
+    pass
+
+class BirthdayInvalidFormatError(Exception):
+    pass
 
 address_book = AddressBook()
 
@@ -121,10 +127,22 @@ def input_error(func):
             return 'IndexError: Give me name and phone please'
         except TypeError:
             return 'You entered invalid numbers of arguments for this command'
+        except PhoneInvalidFormatError:
+            return 'You entered invalid phone format'
+        except BirthdayInvalidFormatError:
+            return 'You entered invalid birthday format'
     return inner
 
 @input_error
 def add_contact(name, phone=None, birthday=None):
+    """
+    This function add the new phone and birthday (if they are given) for contact with the name that are given
+    as parameters in the address_book. If the name is not in contacts, then creates a new record in address_book
+    :param name -> str
+           phone -> str
+           birthday -> str
+    :return str
+    """
     if name in address_book.data.keys():
         if phone is None:
             return f'A contact with name {name} already exists'
@@ -149,6 +167,12 @@ def add_contact(name, phone=None, birthday=None):
 
 @input_error
 def add_birthday(name, birthday):
+    """
+    This function add the birthday for contact with the name that are given as parameters in the address_book
+    :param name -> str
+           birthday -> str
+    :return str
+    """
     address_book.data[name].add_birthday(Birthday(birthday))
     return f'The birthday {birthday} for contact {name} successfully added'
 
@@ -157,7 +181,8 @@ def change_contact(name, old_phone, new_phone):
     """
     This function change the phone for contact with the name that are given as parameters in the address_book
     :param name -> str
-           phone -> str
+           old_phone -> str
+           new_phone -> str
     :return str
     """
     address_book.data[name].change_phone(Phone(old_phone), Phone(new_phone))
@@ -177,7 +202,7 @@ def remove_phone(name, phone):
 @input_error
 def get_phone(name):
     """
-    This function change the phone for contact with the name that are given as parameters in the address_book
+    This function returns the phone or phones for contact with the name that is given as a parameter in the address_book
     :param name -> str
     :return phone -> str
     """
@@ -191,6 +216,11 @@ def get_phone(name):
 
 @input_error
 def get_birthday(name):
+    """
+    This function returns the birthday for contact with the name that is given as a parameter in the address_book
+    :param name -> str
+    :return birthday -> str
+    """
     birthday = address_book.data[name].birthday
     if birthday is None:
         return f'There is no birthday for contact with name {name}'
@@ -200,8 +230,8 @@ def get_birthday(name):
 @input_error
 def show_all(data=address_book.data):
     """
-    This function returns all contact from the address_book
-    :param: None
+    This function returns all contact from the given data. If data is not given then data = address_book
+    :param: data -> dict
     :return: phone_book -> str
     """
     phone_book = ''
@@ -217,7 +247,14 @@ def show_all(data=address_book.data):
     return phone_book
 
 @input_error
-def show_page(page_to_show, n_records = '3'):
+def show_page(page_to_show, n_records='3'):
+    """
+    This function returns contacts from address_book from given page number (given as a parameter page_to_show)
+    with number of records on each page that is given as a parameter n_records
+    :param: page_to_show -> str
+            n_records -> str
+    :return: phone_book -> str
+    """
     page_num = 1
     for page in address_book.iterator(int(n_records)):
         if page_num == int(page_to_show):
